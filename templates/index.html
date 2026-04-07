@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Site Diary – All Entries{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Site Diary Entries</h1>
+        <p class="page-sub">LADOL Power Station &mdash; Contract No. LPS-003</p>
+    </div>
+    <a href="{{ url_for('new_entry') }}" class="btn btn-primary">+ New Entry</a>
+</div>
+
+{% if entries %}
+<div class="entries-grid">
+    {% for entry in entries %}
+    <div class="entry-card">
+        <div class="entry-card-header">
+            <div class="entry-date-badge">
+                <span class="entry-day">{{ entry.entry_date.strftime('%d') }}</span>
+                <span class="entry-month">{{ entry.entry_date.strftime('%b %Y') }}</span>
+            </div>
+            <div class="entry-meta">
+                <h3 class="entry-dow">{{ entry.day_of_week }}</h3>
+                <span class="shift-badge shift-{{ 'day' if 'Day' in entry.shift else 'night' }}">
+                    {{ entry.shift }}
+                </span>
+            </div>
+        </div>
+        <div class="entry-card-body">
+            <p class="entry-info"><strong>Site:</strong> {{ entry.site }}</p>
+            {% if entry.pm %}<p class="entry-info"><strong>PM:</strong> {{ entry.pm }}</p>{% endif %}
+            {% set acts = entry.get_activities() %}
+            {% if acts %}
+            <div class="entry-activities-preview">
+                <p class="entry-info-label">Activities ({{ acts|length }}):</p>
+                <ul class="preview-list">
+                    {% for act in acts[:2] %}
+                    <li>{{ act.text[:80] }}{% if act.text|length > 80 %}…{% endif %}</li>
+                    {% endfor %}
+                    {% if acts|length > 2 %}<li class="more-items">+{{ acts|length - 2 }} more…</li>{% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            {% set lab = entry.get_labour() %}
+            {% if lab %}
+            <p class="entry-info"><strong>Total Workers:</strong> {{ lab.values()|sum }}</p>
+            {% endif %}
+        </div>
+        <div class="entry-card-footer">
+            <a href="{{ url_for('view_entry', entry_id=entry.id) }}" class="btn btn-sm btn-outline">View</a>
+            <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" class="btn btn-sm btn-ghost">Edit</a>
+            <a href="{{ url_for('print_entry', entry_id=entry.id) }}" class="btn btn-sm btn-ghost" target="_blank">Print</a>
+            <a href="{{ url_for('export_excel', entry_id=entry.id) }}" class="btn btn-sm btn-excel">📊 Excel</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📋</div>
+    <h2>No diary entries yet</h2>
+    <p>Start recording your daily site activities by creating the first entry.</p>
+    <a href="{{ url_for('new_entry') }}" class="btn btn-primary">Create First Entry</a>
+</div>
+{% endif %}
+{% endblock %}

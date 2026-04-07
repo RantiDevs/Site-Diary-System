@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% block title %}{% if entry %}Edit Entry{% else %}New Diary Entry{% endif %} – AGR{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{% if entry %}Edit Diary Entry{% else %}New Diary Entry{% endif %}</h1>
+        <p class="page-sub">Fill in all sections below</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">← Back</a>
+</div>
+
+<form method="POST" class="diary-form" id="diaryForm">
+
+    <!-- ── SECTION 1: Project Info ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">🏗️</span>
+            <h2>Project Information</h2>
+        </div>
+        <div class="form-grid form-grid-3">
+            <div class="form-group span-2">
+                <label>Contract Name</label>
+                <input type="text" name="contract_name" value="{{ entry.contract_name if entry else 'LADOL POWER STATION' }}" required>
+            </div>
+            <div class="form-group">
+                <label>Contract / Project No.</label>
+                <input type="text" name="contract_no" value="{{ entry.contract_no if entry else 'LPS-003' }}">
+            </div>
+        </div>
+        <div class="form-grid form-grid-4">
+            <div class="form-group span-2">
+                <label>Site</label>
+                <input type="text" name="site" value="{{ entry.site if entry else 'LADOL Power' }}">
+            </div>
+            <div class="form-group">
+                <label>Date <span class="required">*</span></label>
+                <input type="date" name="entry_date" id="entryDate" value="{{ today }}" required>
+            </div>
+            <div class="form-group">
+                <label>Day</label>
+                <input type="text" id="dayDisplay" readonly placeholder="Auto" class="readonly-field" value="{{ entry.day_of_week if entry else '' }}">
+            </div>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label>Shift</label>
+                <select name="shift">
+                    {% for s in shifts %}
+                    <option value="{{ s }}" {% if entry and entry.shift == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Temperature</label>
+                <div class="input-unit-group">
+                    <input type="number" name="weather" min="0" max="60" step="0.1"
+                           placeholder="32"
+                           value="{{ entry.weather | replace('°C','') | replace(' ','') if entry and entry.weather else '' }}">
+                    <span class="unit-suffix">°C</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION 2: Personnel ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">👷</span>
+            <h2>Personnel</h2>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label>Project Director (PD)</label>
+                <input type="text" name="pe" placeholder="e.g. Rapheal Owolabi" value="{{ entry.pe if entry else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Project Manager (PM)</label>
+                <input type="text" name="pm" placeholder="e.g. Engr. Moses Mshelia" value="{{ entry.pm if entry else '' }}">
+            </div>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label>Project Engineer (PE)</label>
+                <input type="text" name="project_engineer" placeholder="e.g. Engr. Sunday A., Engr Hanson" value="{{ entry.project_engineer if entry else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Site Engineers</label>
+                <input type="text" name="engineers" placeholder="e.g. Julius A, Gbenga D., Osmond" value="{{ entry.engineers if entry else '' }}">
+            </div>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label>Foreman</label>
+                <input type="text" name="foreman" placeholder="Foreman name" value="{{ entry.foreman if entry else '' }}">
+            </div>
+        </div>
+        {% set tf = parse_time(entry.hour_from) if entry else (8, '00', 'AM') %}
+        {% set tt = parse_time(entry.hour_to)   if entry else (5, '00', 'PM') %}
+        <div class="form-grid form-grid-2">
+            <div class="form-group">
+                <label>Working Hours – From</label>
+                <div class="time-picker">
+                    <select name="hour_from_h" class="time-sel">
+                        {% for h in range(1, 13) %}
+                        <option value="{{ h }}" {% if h == tf[0] %}selected{% endif %}>{{ h }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="time-colon">:</span>
+                    <select name="hour_from_m" class="time-sel">
+                        {% for m in ['00','05','10','15','20','25','30','35','40','45','50','55'] %}
+                        <option value="{{ m }}" {% if m == tf[1] %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="hour_from_p" class="time-sel time-period">
+                        <option value="AM" {% if tf[2] == 'AM' %}selected{% endif %}>AM</option>
+                        <option value="PM" {% if tf[2] == 'PM' %}selected{% endif %}>PM</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Working Hours – To</label>
+                <div class="time-picker">
+                    <select name="hour_to_h" class="time-sel">
+                        {% for h in range(1, 13) %}
+                        <option value="{{ h }}" {% if h == tt[0] %}selected{% endif %}>{{ h }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="time-colon">:</span>
+                    <select name="hour_to_m" class="time-sel">
+                        {% for m in ['00','05','10','15','20','25','30','35','40','45','50','55'] %}
+                        <option value="{{ m }}" {% if m == tt[1] %}selected{% endif %}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="hour_to_p" class="time-sel time-period">
+                        <option value="AM" {% if tt[2] == 'AM' %}selected{% endif %}>AM</option>
+                        <option value="PM" {% if tt[2] == 'PM' %}selected{% endif %}>PM</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION 3: Activities ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">⚙️</span>
+            <h2>Activities</h2>
+        </div>
+        <div class="activities-header-row">
+            <span class="col-no">#</span>
+            <span class="col-work">Actual Work Done</span>
+            <span class="col-delay">Delays / Remarks</span>
+            <span class="col-action"></span>
+        </div>
+        <div id="activitiesContainer">
+            {% set acts = entry.get_activities() if entry else [] %}
+            {% if acts %}
+                {% for act in acts %}
+                <div class="activity-row">
+                    <span class="row-no"></span>
+                    <textarea name="activity_text[]" rows="2" placeholder="Describe the work done…">{{ act.text }}</textarea>
+                    <input type="text" name="activity_delay[]" placeholder="Nil / Describe delay" value="{{ act.delay }}">
+                    <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="activity-row">
+                    <span class="row-no"></span>
+                    <textarea name="activity_text[]" rows="2" placeholder="Describe the work done…"></textarea>
+                    <input type="text" name="activity_delay[]" placeholder="Nil / Describe delay">
+                    <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" class="btn btn-add-row" onclick="addActivity()">+ Add Activity</button>
+
+        <div class="others-row">
+            <div class="others-label">Others</div>
+            <textarea name="others" rows="2" placeholder="Any other activities not listed above…">{{ entry.others if entry else '' }}</textarea>
+        </div>
+
+        <div class="note-row">
+            <div class="note-label">Note</div>
+            <textarea name="note" rows="2" placeholder="Issues, observations, or additional notes…">{{ entry.note if entry else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- ── SECTION 4: Deliveries & Collections ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">🚛</span>
+            <h2>Deliveries &amp; Collections</h2>
+        </div>
+        <div class="two-col-lists">
+            <div class="col-list">
+                <h3>Deliveries</h3>
+                <div id="deliveriesContainer">
+                    {% set dels = entry.get_deliveries() if entry else [] %}
+                    {% if dels %}
+                        {% for d in dels %}
+                        <div class="list-row">
+                            <span class="row-no"></span>
+                            <input type="text" name="delivery[]" value="{{ d }}" placeholder="Describe delivery…">
+                            <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-row">
+                            <span class="row-no"></span>
+                            <input type="text" name="delivery[]" placeholder="Describe delivery…">
+                            <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn btn-add-row" onclick="addDelivery()">+ Add Delivery</button>
+            </div>
+            <div class="col-list">
+                <h3>Collections</h3>
+                <div id="collectionsContainer">
+                    {% set cols = entry.get_collections() if entry else [] %}
+                    {% if cols %}
+                        {% for c in cols %}
+                        <div class="list-row">
+                            <span class="row-no"></span>
+                            <input type="text" name="collection[]" value="{{ c }}" placeholder="Describe collection…">
+                            <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-row">
+                            <span class="row-no"></span>
+                            <input type="text" name="collection[]" placeholder="Describe collection…">
+                            <button type="button" class="btn-remove-row" onclick="removeRow(this)">✕</button>
+                        </div>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn btn-add-row" onclick="addCollection()">+ Add Collection</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION 5: Labour Resources ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">👥</span>
+            <h2>Labour Resources</h2>
+        </div>
+        {% set lab = entry.get_labour() if entry else {} %}
+        <div class="resource-grid">
+            {% for cat in labour_categories %}
+            <div class="resource-item">
+                <label>{{ cat }}</label>
+                <input type="number" name="labour_{{ cat }}" min="0" value="{{ lab.get(cat, 0) }}" class="count-input">
+            </div>
+            {% endfor %}
+        </div>
+        <div class="custom-resources" id="customLabourContainer">
+            <!-- custom rows appended here -->
+        </div>
+        <button type="button" class="btn btn-add-row mt-8" onclick="addCustomLabour()">+ Add Custom Labour Category</button>
+        <div class="total-display" id="labourTotal">
+            Total: <strong id="labourTotalVal">0</strong>
+        </div>
+    </div>
+
+    <!-- ── SECTION 6: Plant & Equipment ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">🏗️</span>
+            <h2>Plant &amp; Equipment</h2>
+        </div>
+        {% set plt = entry.get_plant() if entry else {} %}
+        <div class="resource-grid">
+            {% for p in plant_categories %}
+            <div class="resource-item">
+                <label>{{ p }}</label>
+                <input type="number" name="plant_{{ p }}" min="0" value="{{ plt.get(p, 0) }}" class="count-input">
+            </div>
+            {% endfor %}
+        </div>
+        <div class="custom-resources" id="customPlantContainer">
+            <!-- custom rows appended here -->
+        </div>
+        <button type="button" class="btn btn-add-row mt-8" onclick="addCustomPlant()">+ Add Custom Equipment</button>
+    </div>
+
+    <!-- ── SECTION 7: Sign-off ── -->
+    <div class="form-section">
+        <div class="section-header">
+            <span class="section-icon">✍️</span>
+            <h2>Sign-off</h2>
+        </div>
+        <div class="form-grid form-grid-2">
+            <div class="signoff-block">
+                <h3>Prepared By</h3>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="prepared_by" placeholder="Full name" value="{{ entry.prepared_by if entry else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="prepared_date" value="{{ entry.prepared_date.strftime('%Y-%m-%d') if entry and entry.prepared_date else today }}">
+                </div>
+            </div>
+            <div class="signoff-block">
+                <h3>Accepted By</h3>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="accepted_by" placeholder="Full name" value="{{ entry.accepted_by if entry else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" name="accepted_date" value="{{ entry.accepted_date.strftime('%Y-%m-%d') if entry and entry.accepted_date else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            {% if entry %}Save Changes{% else %}Save Entry{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}

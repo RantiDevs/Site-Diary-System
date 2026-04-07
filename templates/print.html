@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Site Diary – {{ entry.entry_date.strftime('%d %b %Y') }}</title>
+    <link rel="icon" type="image/jpeg" href="/static/images/agr_logo.jpg">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { font-family: Arial, sans-serif; font-size: 8.5pt; color: #000; background: #f0f0f0; }
+
+        /* ── Screen wrapper ── */
+        .screen-wrap { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+
+        .no-print {
+            text-align: center; margin: 0 0 16px;
+            display: flex; gap: 10px; justify-content: center;
+        }
+        .no-print button {
+            background: #1a3c5e; color: #fff; border: none;
+            padding: 9px 22px; border-radius: 4px; cursor: pointer;
+            font-size: 11pt;
+        }
+        .no-print a { color: #666; font-size: 10pt; line-height: 2.2; }
+
+        /* ── A4 page shell ── */
+        .page {
+            background: #fff;
+            width: 277mm;
+            padding: 5mm 7mm;
+            box-shadow: 0 2px 12px rgba(0,0,0,.15);
+        }
+
+        /* ── Header ── */
+        .print-header {
+            display: flex; align-items: center;
+            border-bottom: 2.5px solid #1a3c5e;
+            padding-bottom: 5px; margin-bottom: 5px;
+        }
+        .print-logo { height: 46px; width: auto; margin-right: 12px; }
+        .company-info h1 { font-size: 11pt; color: #1a3c5e; font-weight: 700; }
+        .company-info p { font-size: 7.5pt; color: #555; }
+
+        /* ── Info table ── */
+        table.info { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+        table.info td { border: 1px solid #bbb; padding: 2.5px 5px; font-size: 8pt; }
+        table.info td.lbl { background: #eef2f7; font-weight: 600; white-space: nowrap; }
+
+        /* ── Section titles ── */
+        .section-title {
+            background: #1a3c5e; color: #fff;
+            padding: 2px 6px; font-size: 8.5pt; font-weight: 700;
+            margin: 4px 0 1px;
+        }
+
+        /* ── Activities table ── */
+        table.act { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
+        table.act th { background: #d0dce9; border: 1px solid #bbb; padding: 2px 4px; font-size: 7.5pt; text-align: left; }
+        table.act td { border: 1px solid #bbb; padding: 2px 4px; font-size: 7.5pt; vertical-align: top; }
+        table.act td:first-child { text-align: center; width: 22px; }
+        table.act col.col-desc { width: auto; }
+        table.act col.col-delay { width: 120px; }
+
+        /* ── Others / Note ── */
+        .note-row { display: flex; margin-bottom: 2px; border: 1px solid #bbb; font-size: 7.5pt; }
+        .note-lbl { font-weight: 700; padding: 2px 5px; flex-shrink: 0; width: 50px; border-right: 1px solid rgba(0,0,0,.15); }
+        .note-val { padding: 2px 5px; flex: 1; }
+
+        /* ── Deliveries / Collections ── */
+        .two-col { display: flex; gap: 8px; margin-bottom: 3px; }
+        .two-col > div { flex: 1; }
+        .two-col h4 { font-size: 8pt; font-weight: 700; margin-bottom: 2px; background: #cfe2f3; padding: 2px 5px; }
+        .two-col ol { padding-left: 14px; font-size: 7.5pt; }
+        .two-col li { border-bottom: 1px solid #eee; padding: 1px 0; }
+
+        /* ── Resources ── */
+        .res-grid { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 3px; }
+        .res-item { display: flex; justify-content: space-between; border: 1px solid #bbb; padding: 2px 6px; font-size: 7.5pt; min-width: 120px; flex: 1; }
+        .res-item .cnt { font-weight: 700; color: #1a3c5e; margin-left: 8px; }
+
+        /* ── Sign-off ── */
+        .signoff-row { display: flex; gap: 12px; margin-top: 6px; }
+        .signoff-block { flex: 1; border: 1px solid #bbb; padding: 5px; }
+        .signoff-block p { font-size: 7.5pt; margin-bottom: 2px; }
+        .sig-line { border-bottom: 1px solid #000; margin-top: 20px; margin-bottom: 2px; }
+        .sig-label { font-size: 7pt; color: #666; }
+
+        /* ── Print rules ── */
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            html, body { background: #fff !important; font-size: 7pt !important; }
+            .no-print { display: none !important; }
+            .screen-wrap { padding: 0; }
+            .page {
+                width: 100%;
+                padding: 3mm 4mm;
+                box-shadow: none;
+            }
+            @page {
+                size: A4 landscape;
+                margin: 5mm 6mm;
+            }
+            table, .res-grid, .two-col { page-break-inside: avoid; }
+            .section-title { page-break-after: avoid; }
+            table.info td { padding: 1.5px 4px; font-size: 7pt; }
+            table.act td, table.act th { padding: 1.5px 3px; font-size: 7pt; }
+            .res-item { font-size: 7pt; padding: 1px 4px; min-width: 100px; }
+            .note-row { font-size: 7pt; }
+            .signoff-block p { font-size: 7pt; }
+            .section-title { font-size: 7.5pt; padding: 1px 5px; margin: 2px 0 1px; }
+            .print-header { padding-bottom: 3px; margin-bottom: 3px; }
+            .print-logo { height: 36px; }
+            .company-info h1 { font-size: 9pt; }
+            .company-info p { font-size: 6.5pt; }
+        }
+    </style>
+</head>
+<body>
+<div class="screen-wrap">
+    <div class="no-print">
+        <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <a href="javascript:window.close()">✕ Close</a>
+    </div>
+
+    <div class="page">
+        <!-- Header -->
+        <div class="print-header">
+            <img src="/static/images/agr_logo.jpg" alt="AGR Logo" class="print-logo">
+            <div class="company-info">
+                <h1>AGR Construction</h1>
+                <p>Design | Construction | Maintenance &nbsp;|&nbsp; RC 718729</p>
+            </div>
+        </div>
+
+        <!-- Project info -->
+        <table class="info">
+            <tr>
+                <td class="lbl">Contract Name</td>
+                <td colspan="3"><strong>{{ entry.contract_name }}</strong></td>
+                <td class="lbl">Contract No.</td>
+                <td><strong>{{ entry.contract_no }}</strong></td>
+            </tr>
+            <tr>
+                <td class="lbl">Site</td>
+                <td>{{ entry.site }}</td>
+                <td class="lbl">Date</td>
+                <td>{{ entry.day_of_week }}, {{ entry.entry_date.strftime('%d/%m/%Y') }}</td>
+                <td class="lbl">Shift</td>
+                <td><strong>{{ entry.shift }}</strong></td>
+            </tr>
+            <tr>
+                <td class="lbl">Working Hours</td>
+                <td>{{ fmt_time(entry.hour_from) }} – {{ fmt_time(entry.hour_to) }}</td>
+                <td class="lbl">Temperature</td>
+                <td>{{ fmt_weather(entry.weather) }}</td>
+                <td class="lbl">Foreman</td>
+                <td>{{ entry.foreman or '—' }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">PD</td>
+                <td>{{ entry.pe or '—' }}</td>
+                <td class="lbl">PM</td>
+                <td>{{ entry.pm or '—' }}</td>
+                <td class="lbl">Engineers</td>
+                <td>{{ entry.engineers or '—' }}</td>
+            </tr>
+            <tr>
+                <td class="lbl">PE</td>
+                <td colspan="5">{{ entry.project_engineer or '—' }}</td>
+            </tr>
+        </table>
+
+        <!-- Activities -->
+        <div class="section-title">Activities</div>
+        <table class="act">
+            <colgroup>
+                <col style="width:24px">
+                <col class="col-desc">
+                <col class="col-delay">
+            </colgroup>
+            <thead>
+                <tr><th>#</th><th>Actual Work Done</th><th>Delays / Remarks</th></tr>
+            </thead>
+            <tbody>
+                {% for act in entry.get_activities() %}
+                <tr><td>{{ loop.index }}</td><td>{{ act.text }}</td><td>{{ act.delay or 'Nil' }}</td></tr>
+                {% else %}
+                <tr><td colspan="3" style="text-align:center;color:#888">No activities recorded</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if entry.others %}
+        <div class="note-row">
+            <div class="note-lbl" style="background:#93c47d;">Others</div>
+            <div class="note-val" style="background:#eaf5e0;">{{ entry.others }}</div>
+        </div>
+        {% endif %}
+        {% if entry.note %}
+        <div class="note-row">
+            <div class="note-lbl" style="background:#ea9999;">Note</div>
+            <div class="note-val" style="background:#fdf0f0;">{{ entry.note }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Deliveries & Collections -->
+        <div class="section-title">Deliveries &amp; Collections</div>
+        <div class="two-col">
+            <div>
+                <h4>Deliveries</h4>
+                <ol>{% for d in entry.get_deliveries() %}<li>{{ d }}</li>{% else %}<li style="color:#aaa">None</li>{% endfor %}</ol>
+            </div>
+            <div>
+                <h4>Collections</h4>
+                <ol>{% for c in entry.get_collections() %}<li>{{ c }}</li>{% else %}<li style="color:#aaa">None</li>{% endfor %}</ol>
+            </div>
+        </div>
+
+        <!-- Labour -->
+        <div class="section-title">Labour Resources — Total Workers: {{ entry.get_labour().values()|sum }}</div>
+        <div class="res-grid">
+            {% for cat, count in entry.get_labour().items() %}{% if count > 0 %}
+            <div class="res-item"><span>{{ cat }}</span><span class="cnt">{{ count }}</span></div>
+            {% endif %}{% endfor %}
+        </div>
+
+        <!-- Plant -->
+        <div class="section-title">Plant &amp; Equipment</div>
+        <div class="res-grid">
+            {% for p, count in entry.get_plant().items() %}{% if count > 0 %}
+            <div class="res-item"><span>{{ p }}</span><span class="cnt">{{ count }}</span></div>
+            {% endif %}{% endfor %}
+        </div>
+
+        <!-- Sign-off -->
+        <div class="signoff-row">
+            <div class="signoff-block">
+                <p><strong>Prepared By:</strong> {{ entry.prepared_by or '—' }}</p>
+                <p><strong>Date:</strong> {{ entry.prepared_date.strftime('%d/%m/%Y') if entry.prepared_date else '—' }}</p>
+                <div class="sig-line"></div>
+                <p class="sig-label">Signature</p>
+            </div>
+            <div class="signoff-block">
+                <p><strong>Accepted By:</strong> {{ entry.accepted_by or '—' }}</p>
+                <p><strong>Date:</strong> {{ entry.accepted_date.strftime('%d/%m/%Y') if entry.accepted_date else '—' }}</p>
+                <div class="sig-line"></div>
+                <p class="sig-label">Signature</p>
+            </div>
+        </div>
+    </div><!-- /.page -->
+</div><!-- /.screen-wrap -->
+</body>
+</html>

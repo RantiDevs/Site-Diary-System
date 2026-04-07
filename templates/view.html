@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}View Entry – {{ entry.entry_date.strftime('%d %b %Y') }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ entry.day_of_week }}, {{ entry.entry_date.strftime('%d %B %Y') }}</h1>
+        <p class="page-sub">{{ entry.site }} &mdash; {{ entry.shift }}</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('print_entry', entry_id=entry.id) }}" target="_blank" class="btn btn-outline">🖨️ Print</a>
+        <a href="{{ url_for('export_excel', entry_id=entry.id) }}" class="btn btn-excel">📊 Download Excel</a>
+        <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" class="btn btn-outline">✏️ Edit</a>
+        <form method="POST" action="{{ url_for('delete_entry', entry_id=entry.id) }}" style="display:inline" onsubmit="return confirm('Delete this entry?')">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <a href="{{ url_for('index') }}" class="btn btn-ghost">← Back</a>
+    </div>
+</div>
+
+<div class="view-card">
+
+    <!-- Project Info -->
+    <div class="view-section">
+        <table class="info-table">
+            <tr>
+                <td class="info-label">Contract Name</td>
+                <td><strong>{{ entry.contract_name }}</strong></td>
+                <td class="info-label">Contract No.</td>
+                <td><strong>{{ entry.contract_no }}</strong></td>
+            </tr>
+            <tr>
+                <td class="info-label">Site</td>
+                <td>{{ entry.site }}</td>
+                <td class="info-label">Date</td>
+                <td>{{ entry.day_of_week }}, {{ entry.entry_date.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Shift</td>
+                <td><span class="shift-badge shift-{{ 'day' if 'Day' in entry.shift else 'night' }}">{{ entry.shift }}</span></td>
+                <td class="info-label">Temperature</td>
+                <td>{{ fmt_weather(entry.weather) }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Working Hours</td>
+                <td colspan="3">{{ fmt_time(entry.hour_from) }} to {{ fmt_time(entry.hour_to) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Personnel -->
+    <div class="view-section">
+        <h3 class="view-section-title">Personnel</h3>
+        <table class="info-table">
+            <tr>
+                <td class="info-label">PD</td>
+                <td>{{ entry.pe or '—' }}</td>
+                <td class="info-label">PM</td>
+                <td>{{ entry.pm or '—' }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">PE</td>
+                <td colspan="3">{{ entry.project_engineer or '—' }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Site Engineers</td>
+                <td colspan="3">{{ entry.engineers or '—' }}</td>
+            </tr>
+            <tr>
+                <td class="info-label">Foreman</td>
+                <td colspan="3">{{ entry.foreman or '—' }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Activities -->
+    {% set acts = entry.get_activities() %}
+    <div class="view-section">
+        <h3 class="view-section-title">Activities</h3>
+        <table class="activities-table">
+            <thead>
+                <tr>
+                    <th width="40">#</th>
+                    <th>Actual Work Done</th>
+                    <th width="200">Delays / Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in acts %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ act.text }}</td>
+                    <td>{{ act.delay or 'Nil' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="empty-cell">No activities recorded</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if entry.others %}
+        <div class="others-view-box">
+            <span class="others-view-label">Others</span>
+            <span>{{ entry.others }}</span>
+        </div>
+        {% endif %}
+        {% if entry.note %}
+        <div class="note-box">
+            <strong>Note:</strong> {{ entry.note }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Deliveries & Collections -->
+    <div class="view-section">
+        <h3 class="view-section-title">Deliveries &amp; Collections</h3>
+        <div class="two-col-view">
+            <div>
+                <h4>Deliveries</h4>
+                <ol class="plain-list">
+                    {% for d in entry.get_deliveries() %}
+                    <li>{{ d }}</li>
+                    {% else %}
+                    <li class="empty-cell">None recorded</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            <div>
+                <h4>Collections</h4>
+                <ol class="plain-list">
+                    {% for c in entry.get_collections() %}
+                    <li>{{ c }}</li>
+                    {% else %}
+                    <li class="empty-cell">None recorded</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Labour Resources -->
+    {% set lab = entry.get_labour() %}
+    <div class="view-section">
+        <h3 class="view-section-title">Labour Resources &mdash; Total: <strong>{{ lab.values()|sum }}</strong></h3>
+        <div class="resource-view-grid">
+            {% for cat, count in lab.items() %}
+            {% if count > 0 %}
+            <div class="resource-view-item">
+                <span class="res-label">{{ cat }}</span>
+                <span class="res-count">{{ count }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Plant & Equipment -->
+    {% set plt = entry.get_plant() %}
+    <div class="view-section">
+        <h3 class="view-section-title">Plant &amp; Equipment</h3>
+        <div class="resource-view-grid">
+            {% for p, count in plt.items() %}
+            {% if count > 0 %}
+            <div class="resource-view-item">
+                <span class="res-label">{{ p }}</span>
+                <span class="res-count">{{ count }}</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sign-off -->
+    <div class="view-section">
+        <h3 class="view-section-title">Sign-off</h3>
+        <div class="signoff-view">
+            <div class="signoff-view-block">
+                <p><strong>Prepared By:</strong> {{ entry.prepared_by or '—' }}</p>
+                <p><strong>Date:</strong> {{ entry.prepared_date.strftime('%d/%m/%Y') if entry.prepared_date else '—' }}</p>
+                <div class="sig-line"></div>
+                <p class="sig-label">Signature</p>
+            </div>
+            <div class="signoff-view-block">
+                <p><strong>Accepted By:</strong> {{ entry.accepted_by or '—' }}</p>
+                <p><strong>Date:</strong> {{ entry.accepted_date.strftime('%d/%m/%Y') if entry.accepted_date else '—' }}</p>
+                <div class="sig-line"></div>
+                <p class="sig-label">Signature</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
