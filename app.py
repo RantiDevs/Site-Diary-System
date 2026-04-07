@@ -13,11 +13,15 @@ from openpyxl.drawing.image import Image as XLImage
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24).hex()
 
-database_url = os.environ.get('DATABASE_URL', 'sqlite:///site_diary.db')
+database_url = os.environ.get('NEON_DATABASE_URL') or os.environ.get('DATABASE_URL', 'sqlite:///site_diary.db')
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+}
 
 db = SQLAlchemy(app)
 
