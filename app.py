@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.drawing.image import Image as XLImage
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'agr-construction-diary-2024')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(24).hex()
 
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///site_diary.db')
 if database_url.startswith('postgres://'):
@@ -666,8 +666,8 @@ def fmt_weather(w):
 
 app.jinja_env.globals['fmt_weather'] = fmt_weather
 
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)
